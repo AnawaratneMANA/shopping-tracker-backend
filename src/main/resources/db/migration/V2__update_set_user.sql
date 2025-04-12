@@ -1,0 +1,1 @@
+ALTER TABLE set_user ADD COLUMN salt VARCHAR (255) NULL;

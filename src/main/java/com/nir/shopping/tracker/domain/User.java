@@ -1,4 +1,6 @@
-package main.java.com.nir.shopping.tracker.domain;
+package com.nir.shopping.tracker.domain;
+
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "set_user")
@@ -13,5 +15,27 @@ public class User {
     @Column(nullable = false)
     private String hashPassword;
 
-    // Getters and setters
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getHashPassword() {
+        return hashPassword;
+    }
+
+    public void setHashPassword(String hashPassword) {
+        this.hashPassword = hashPassword;
+    }
 }
