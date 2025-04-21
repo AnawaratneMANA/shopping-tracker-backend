@@ -3,9 +3,12 @@ package com.nir.shopping.tracker.service;
 import com.nir.shopping.tracker.domain.ShoppingList;
 import com.nir.shopping.tracker.domain.ShoppingListItem;
 import com.nir.shopping.tracker.dto.MonthlyReport;
+import com.nir.shopping.tracker.dto.ShoppingListDto;
+import com.nir.shopping.tracker.dto.ShoppingListItemDto;
 import com.nir.shopping.tracker.repository.ShoppingListItemRepository;
 import com.nir.shopping.tracker.repository.ShoppingListRepository;
 import com.nir.shopping.tracker.repository.UserRepository;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -13,8 +16,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class ShoppingListService {
@@ -22,11 +27,15 @@ public class ShoppingListService {
     private final ShoppingListRepository shoppingListRepository;
     private final ShoppingListItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final ModelMapper modelMapper;
 
-    public ShoppingListService(ShoppingListRepository shoppingListRepository, ShoppingListItemRepository itemRepository, UserRepository userRepository) {
+    public ShoppingListService(ShoppingListRepository shoppingListRepository,
+                               ShoppingListItemRepository itemRepository,
+                               UserRepository userRepository, ModelMapper modelMapper) {
         this.shoppingListRepository = shoppingListRepository;
         this.itemRepository = itemRepository;
         this.userRepository = userRepository;
+        this.modelMapper = modelMapper;
     }
 
     /**
@@ -36,7 +45,7 @@ public class ShoppingListService {
      * @param shoppingList > Shopping list
      * @return {@link ShoppingList}
      */
-    public ShoppingList createOrUpdateList(Long userId, ShoppingList shoppingList) {
+    public ShoppingListDto createOrUpdateList(Long userId, ShoppingList shoppingList) {
         log.debug("Creating shopping list: {}", shoppingList.getListName());
         if (shoppingList.getShoppingListId() == null || shoppingList.getUser() == null) {
             shoppingList.setUser(userRepository.findById(userId).orElseThrow());
@@ -46,7 +55,7 @@ public class ShoppingListService {
                 item.setShoppingList(shoppingList);
             }
         }
-        return shoppingListRepository.save(shoppingList);
+        return modelMapper.map(shoppingListRepository.save(shoppingList), ShoppingListDto.class);
     }
 
     /**
@@ -56,11 +65,11 @@ public class ShoppingListService {
      * @param item   > Item
      * @return {@link ShoppingListItem}
      */
-    public ShoppingListItem createOrUpdateItem(Long listId, ShoppingListItem item, Long userId) {
+    public ShoppingListItemDto createOrUpdateItem(Long listId, ShoppingListItem item, Long userId) {
         ShoppingList list = shoppingListRepository.findByShoppingListIdAndUserUserId(listId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("List not found or does not belong to user"));
         item.setShoppingList(list);
-        return itemRepository.save(item);
+        return modelMapper.map(itemRepository.save(item), ShoppingListItemDto.class);
     }
 
     /**
@@ -70,10 +79,14 @@ public class ShoppingListService {
      * @param detail > Detail information
      * @return {@link List<ShoppingList>}
      */
-    public List<ShoppingList> getLists(Long userId, boolean detail) {
+    public List<ShoppingListDto> getLists(Long userId, boolean detail) {
         log.debug("Get lists for the user: {}", userId);
-        return detail ? shoppingListRepository.findAllWithItemsByUserId(userId)
+        List<ShoppingList> shoppingLists = detail ? shoppingListRepository.findAllWithItemsByUserId(userId)
                 : shoppingListRepository.findAllByUserId(userId);
+        return shoppingLists.stream()
+                .map(list -> modelMapper.map(list, ShoppingListDto.class))
+                .collect(Collectors.toList());
+
     }
 
     /**
@@ -90,7 +103,12 @@ public class ShoppingListService {
                 .map(ShoppingList::getTotal)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return new MonthlyReport(lists, overallTotal);
+        MonthlyReport report = new MonthlyReport();
+        report.setList(lists.stream()
+                .map(list -> modelMapper.map(list, ShoppingListDto.class))
+                .collect(Collectors.toList()));
+        report.setTotal(overallTotal);
+        return report;
     }
 
 

@@ -6,19 +6,22 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public class MonthlyReport {
-    private final List<ShoppingList> list;
-    private final BigDecimal total;
-
-    public MonthlyReport(List<ShoppingList> list, BigDecimal total) {
-        this.list = list;
-        this.total = total;
-    }
-
-    public List<ShoppingList> getList() {
-        return list;
-    }
+    private List<ShoppingListDto> list;
+    private BigDecimal total;
 
     public BigDecimal getTotal() {
         return total;
+    }
+
+    public List<ShoppingListDto> getList() {
+        return list;
+    }
+
+    public void setList(List<ShoppingListDto> list) {
+        this.list = list;
+    }
+
+    public void setTotal(BigDecimal total) {
+        this.total = total;
     }
 }
