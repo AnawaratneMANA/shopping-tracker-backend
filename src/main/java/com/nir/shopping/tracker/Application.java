@@ -15,7 +15,7 @@ public class Application {
 		SpringApplication.run(Application.class, args);
 		String salt = BCrypt.gensalt(12);
 		String hashed = BCrypt.hashpw("apple@123", salt);
-		log.info("Hashed password: {}\nSalt: {}", hashed, salt);
+		log.debug("root user hashed: {} and salt: {}", hashed, salt);
 	}
 
 }
